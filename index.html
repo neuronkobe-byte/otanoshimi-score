@@ -469,7 +469,7 @@ function save(){
   send({
     date: d(), slot: slotLabel(state.slot), table: state.table,
     rows: rec.map(function(r){
-      return [d(), slotLabel(state.slot), state.table+"卓", r.wind, r.name, r.score, r.score-START, r.rank];
+      return [d(), slotLabel(state.slot), state.table+"卓", r.wind, r.name, r.score, r.rank];
     })
   }).then(function(){
     toast("記録しました");
@@ -687,7 +687,7 @@ var GAS_CODE =
 '  var p  = JSON.parse(e.postData.contents);\n' +
 '\n' +
 '  if (sh.getLastRow() === 0) {\n' +
-'    sh.appendRow(["日付","時間帯","卓","座席","名前","最終点数","増減","順位"]);\n' +
+'    sh.appendRow(["日付","時間帯","卓","座席","名前","最終点数","順位"]);\n' +
 '  }\n' +
 '  if (p.test) return ContentService.createTextOutput("ok");\n' +
 '\n' +
