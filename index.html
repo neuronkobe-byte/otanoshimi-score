@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>お楽しみ会 点数記録｜ニューロン麻雀スクール神戸校</title>
+<style>
+:root{
+  --ivory:#FBF4EA;
+  --paper:#FFFCF6;
+  --felt:#DD7A2C;
+  --felt-dark:#AF551A;
+  --ink:#2B2723;
+  --muted:#8A8077;
+  --line:#EDDFC9;
+  --red:#B23A32;
+  --gold:#1F6F5C;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ivory);
+  color:var(--ink);
+  font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  font-size:16px;line-height:1.5;
+  padding-bottom:40px;
+}
+header{
+  background:var(--felt);color:#fff;
+  padding:12px 14px;
+  position:sticky;top:0;z-index:20;
+}
+.hrow{display:flex;align-items:center;gap:10px}
+.title{font-size:16px;font-weight:700;letter-spacing:.04em;flex:1}
+.title small{display:block;font-size:11px;font-weight:400;opacity:.75;letter-spacing:.08em}
+header input[type=date]{
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);
+  color:#fff;border-radius:6px;padding:6px 8px;font-size:14px;font-family:inherit;
+}
+nav{display:flex;background:var(--felt-dark)}
+nav button{
+  flex:1;background:none;border:none;color:rgba(255,255,255,.6);
+  padding:11px 0;font-size:14px;font-family:inherit;font-weight:600;cursor:pointer;
+  border-bottom:3px solid transparent;
+}
+nav button.on{color:#fff;border-bottom-color:var(--gold)}
+main{padding:14px;max-width:640px;margin:0 auto}
+.hide{display:none!important}
+
+.label{font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.chip{
+  background:var(--paper);border:1px solid var(--line);border-radius:8px;
+  padding:9px 12px;font-size:14px;font-family:inherit;font-weight:600;color:var(--ink);
+  cursor:pointer;position:relative;min-width:62px;
+}
+.chip.on{background:var(--felt);border-color:var(--felt);color:#fff}
+.chip .dot{
+  position:absolute;top:4px;right:5px;width:6px;height:6px;border-radius:50%;
+  background:var(--gold);
+}
+.chip.on .dot{background:#fff}
+.chip.round{line-height:1.25;padding:8px 12px}
+.chip.round .t{display:block;font-size:10px;font-weight:400;opacity:.65}
+
+.card{
+  background:var(--paper);border:1px solid var(--line);border-radius:10px;
+  padding:14px;margin-bottom:14px;
+}
+.seat{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.seat:last-child{border-bottom:none}
+.wind{
+  width:32px;height:32px;flex:0 0 32px;border-radius:6px;
+  background:var(--felt);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:700;
+}
+.seat input{
+  font-family:inherit;font-size:15px;padding:8px;border:1px solid var(--line);
+  border-radius:6px;background:#fff;color:var(--ink);min-width:0;
+}
+.nm{flex:1}
+.sc{width:82px;text-align:right}
+.rk{
+  width:34px;flex:0 0 34px;text-align:center;font-size:14px;font-weight:700;color:var(--muted);
+}
+.rk.r1{color:var(--gold)}
+.total{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:10px;padding-top:10px;border-top:1px solid var(--line);
+  font-size:13px;color:var(--muted);
+}
+.total b{font-size:15px;color:var(--ink)}
+.total.bad b{color:var(--red)}
+
+.btn{
+  width:100%;padding:14px;border:none;border-radius:9px;
+  background:var(--felt);color:#fff;font-size:16px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+}
+.btn:disabled{background:#C3BCB1}
+.btn.sub{background:var(--paper);color:var(--ink);border:1px solid var(--line);font-size:14px;padding:11px}
+.btnrow{display:flex;gap:8px;margin-bottom:14px}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{
+  text-align:left;font-size:11px;color:var(--muted);font-weight:600;
+  padding:6px 4px;border-bottom:1px solid var(--line);white-space:nowrap;
+}
+td{padding:9px 4px;border-bottom:1px solid var(--line)}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pos{color:var(--felt)}
+.neg{color:var(--red)}
+.rank1 td{background:#FDEEDC}
+.rk-badge{
+  display:inline-flex;width:22px;height:22px;border-radius:50%;
+  align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  background:var(--line);color:var(--ink)
+}
+.rank1 .rk-badge{background:var(--gold);color:#fff}
+
+textarea{
+  width:100%;min-height:110px;font-family:inherit;font-size:14px;padding:10px;
+  border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);
+}
+input.full{
+  width:100%;font-family:inherit;font-size:14px;padding:10px;
+  border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);
+}
+pre{
+  background:#fff;border:1px solid var(--line);border-radius:8px;
+  padding:12px;font-size:11.5px;overflow-x:auto;line-height:1.45;
+}
+.note{font-size:12.5px;color:var(--muted);line-height:1.6;margin:8px 0 18px}
+h2{font-size:15px;margin:22px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--felt)}
+h2:first-child{margin-top:0}
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:36px 0}
+
+#toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,90px);
+  background:var(--ink);color:#fff;padding:12px 20px;border-radius:24px;
+  font-size:14px;z-index:60;transition:transform .25s;max-width:90%;text-align:center;
+}
+#toast.show{transform:translate(-50%,0)}
+#toast.err{background:var(--red)}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <div class="title">お楽しみ会<small>9月13日（日）ニューロン麻雀スクール神戸校</small></div>
+    <input type="date" id="date">
+  </div>
+</header>
+
+<nav>
+  <button id="tab-in" class="on" onclick="tab('in')">入力</button>
+  <button id="tab-rk" onclick="tab('rk')">ランキング</button>
+  <button id="tab-st" onclick="tab('st')">設定</button>
+</nav>
+
+<main>
+
+<!-- ===== 入力 ===== -->
+<section id="pg-in">
+  <p class="label">時間帯</p>
+  <div class="chips" id="slots"></div>
+
+  <p class="label">卓</p>
+  <div class="chips" id="tables"></div>
+
+  <div class="card">
+    <div id="seats"></div>
+    <div class="total" id="total"><span>合計</span><b>0</b></div>
+  </div>
+
+  <button class="btn" id="save" onclick="save()">この卓を記録する</button>
+  <p class="note">金色の点がついている時間帯・卓は記録済みです。選び直すと内容を修正できます（スプレッドシート側も上書きされます）。</p>
+</section>
+
+<!-- ===== ランキング ===== -->
+<section id="pg-rk" class="hide">
+  <div class="btnrow">
+    <button class="btn sub" onclick="setView('ind')" id="v-ind">個人戦</button>
+    <button class="btn sub" onclick="setView('team')" id="v-team">チーム戦</button>
+  </div>
+  <div class="btnrow" id="sortrow">
+    <button class="btn sub" onclick="setSort('pt')" id="s-pt">累計±点順</button>
+    <button class="btn sub" onclick="setSort('av')" id="s-av">平均順位</button>
+  </div>
+  <div id="ranking"></div>
+  <div class="btnrow" style="margin-top:16px">
+    <button class="btn sub" onclick="csv()">CSVで書き出す</button>
+  </div>
+</section>
+
+<!-- ===== 設定 ===== -->
+<section id="pg-st" class="hide">
+  <h2>スプレッドシート連携</h2>
+  <input class="full" id="gas" placeholder="GASウェブアプリのURLを貼り付け">
+  <div class="btnrow" style="margin-top:8px">
+    <button class="btn sub" onclick="saveGas()">URLを保存</button>
+    <button class="btn sub" onclick="testGas()">接続を確認</button>
+  </div>
+  <p class="note">URLはこの端末に保存されます。未設定でも記録はできますが、端末内だけに残ります。</p>
+
+  <h2>参加者リスト</h2>
+  <textarea id="roster" placeholder="1行に1名ずつ貼り付け&#10;例：&#10;山田花子&#10;鈴木一郎"></textarea>
+  <div class="btnrow" style="margin-top:8px">
+    <button class="btn sub" onclick="saveRoster()">リストを保存</button>
+  </div>
+  <p class="note" id="rcount"></p>
+
+  <h2>この日のデータ</h2>
+  <p class="note" id="dcount"></p>
+  <button class="btn sub" onclick="wipe()">この日の記録を消す</button>
+
+  <h2>GASのコード</h2>
+  <p class="note">スプレッドシートの「拡張機能 → Apps Script」に貼り付けて、ウェブアプリとしてデプロイしてください（アクセスできるユーザー：全員）。</p>
+  <pre id="gascode"></pre>
+</section>
+
+</main>
+
+<datalist id="names"></datalist>
+<div id="toast"></div>
+
+<script>
+/* ---------- 定数 ---------- */
+var SLOTS = ["10:00","11:00","12:00","13:00","14:00","15:00","16:00"];
+var TABLES = [1,2,3,4,5,6];
+var WINDS = ["東","南","西","北"];
+var ROUND_COUNT = 4;   // 1〜4回戦。以降は時間のまま表示
+function roundOf(slot){
+  var i = SLOTS.indexOf(slot);
+  return i < ROUND_COUNT ? (i + 1) + "回戦" : "";
+}
+function slotLabel(slot){
+  var r = roundOf(slot);
+  return r ? r + "（" + slot + "）" : slot;
+}
+var START = 25000;
+
+/* ---------- 開催日 ---------- */
+var EVENT_DATE = "2026-09-13";   // 9月13日（日）
+
+/* ---------- 参加者24名 ---------- */
+var DEFAULT_ROSTER = [
+  "松田律子","余語","玉置","そう","木村","長谷部","中村","柿本",
+  "今野","鮫島","塩崎しおり","阪下","塩崎あとし","木田","山下","小田垣",
+  "よしのり","宮脇","芝好","樋口","いっさ","松田加代子","岡本","立松"
+];
+
+/* ---------- チーム（1回戦の同卓メンバー） ---------- */
+var TEAMS = [
+  { name:"1チーム", members:["松田律子","余語","玉置","そう"] },
+  { name:"2チーム", members:["木村","長谷部","中村","柿本"] },
+  { name:"3チーム", members:["今野","鮫島","塩崎しおり","阪下"] },
+  { name:"4チーム", members:["塩崎あとし","木田","山下","小田垣"] },
+  { name:"5チーム", members:["よしのり","宮脇","芝好","樋口"] },
+  { name:"6チーム", members:["いっさ","松田加代子","岡本","立松"] }
+];
+var TEAM_OF = {};
+TEAMS.forEach(function(t){ t.members.forEach(function(m){ TEAM_OF[m] = t.name; }); });
+
+/* ---------- 事前の席割り（時間帯 → 卓 → 東南西北） ---------- */
+var SEATING = {
+  "10:00": {
+    1:["松田律子","余語","玉置","そう"],
+    2:["木村","長谷部","中村","柿本"],
+    3:["今野","鮫島","塩崎しおり","阪下"],
+    4:["塩崎あとし","木田","山下","小田垣"],
+    5:["よしのり","宮脇","芝好","樋口"],
+    6:["いっさ","松田加代子","岡本","立松"]
+  },
+  "11:00": {
+    1:["松田律子","立松","柿本","山下"],
+    2:["今野","そう","宮脇","小田垣"],
+    3:["松田加代子","玉置","木村","阪下"],
+    4:["塩崎あとし","塩崎しおり","岡本","芝好"],
+    5:["よしのり","木田","中村","余語"],
+    6:["いっさ","樋口","鮫島","長谷部"]
+  },
+  "12:00": {
+    1:["樋口","松田加代子","今野","余語"],
+    2:["立松","木村","よしのり","鮫島"],
+    3:["芝好","柿本","いっさ","木田"],
+    4:["玉置","宮脇","岡本","山下"],
+    5:["塩崎あとし","長谷部","そう","阪下"],
+    6:["松田律子","小田垣","中村","塩崎しおり"]
+  },
+  "13:00": {
+    1:["樋口","木田","松田律子","岡本"],
+    2:["よしのり","いっさ","阪下","小田垣"],
+    3:["松田加代子","芝好","中村","鮫島"],
+    4:["余語","宮脇","長谷部","立松"],
+    5:["山下","木村","そう","塩崎しおり"],
+    6:["塩崎あとし","玉置","今野","柿本"]
+  }
+};
+
+/* ---------- 保存（localStorage が使えない環境ではメモリに退避） ---------- */
+var mem = {};
+function ls(k, v){
+  try{
+    if(v === undefined) return localStorage.getItem(k);
+    localStorage.setItem(k, v); return v;
+  }catch(e){
+    if(v === undefined) return (k in mem) ? mem[k] : null;
+    mem[k] = v; return v;
+  }
+}
+
+/* ---------- 状態 ---------- */
+var state = {
+  slot: SLOTS[0],
+  table: 1,
+  sort: "pt",
+  view: "ind",
+  records: JSON.parse(ls("nk_records") || "{}"),   // key: 日付|時間帯|卓 → [{name,score,rank}]
+  roster: JSON.parse(ls("nk_roster") || "null") || DEFAULT_ROSTER.slice(),
+  gas: ls("nk_gas") || ""
+};
+
+function key(){ return d() + "|" + state.slot + "|" + state.table; }
+function d(){ return document.getElementById("date").value; }
+
+/* ---------- 起動 ---------- */
+(function init(){
+  document.getElementById("date").value = EVENT_DATE;
+  document.getElementById("date").onchange = function(){ drawChips(); load(); draw(); };
+  document.getElementById("gas").value = state.gas;
+  document.getElementById("roster").value = state.roster.join("\n");
+  document.getElementById("gascode").textContent = GAS_CODE;
+  buildSeats();
+  drawChips();
+  load();
+  draw();
+})();
+
+/* ---------- タブ ---------- */
+function tab(x){
+  ["in","rk","st"].forEach(function(k){
+    document.getElementById("pg-"+k).classList.toggle("hide", k !== x);
+    document.getElementById("tab-"+k).classList.toggle("on", k === x);
+  });
+  if(x === "rk") drawRanking();
+  if(x === "st") drawStats();
+}
+
+/* ---------- 時間帯・卓のチップ ---------- */
+function drawChips(){
+  var s = document.getElementById("slots"); s.innerHTML = "";
+  SLOTS.forEach(function(v){
+    var b = document.createElement("button");
+    b.className = "chip round" + (v === state.slot ? " on" : "");
+    b.innerHTML = roundOf(v) ? roundOf(v) + '<span class="t">' + v + '</span>' : v;
+    if(anyTable(v)) b.innerHTML += '<span class="dot"></span>';
+    b.onclick = function(){ state.slot = v; drawChips(); load(); };
+    s.appendChild(b);
+  });
+  var t = document.getElementById("tables"); t.innerHTML = "";
+  TABLES.forEach(function(v){
+    var b = document.createElement("button");
+    b.className = "chip" + (v === state.table ? " on" : "");
+    b.textContent = v + "卓";
+    if(state.records[d()+"|"+state.slot+"|"+v]) b.innerHTML += '<span class="dot"></span>';
+    b.onclick = function(){ state.table = v; drawChips(); load(); };
+    t.appendChild(b);
+  });
+}
+function anyTable(slot){
+  return TABLES.some(function(v){ return state.records[d()+"|"+slot+"|"+v]; });
+}
+
+/* ---------- 座席 ---------- */
+function buildSeats(){
+  var box = document.getElementById("seats");
+  box.innerHTML = "";
+  WINDS.forEach(function(w,i){
+    var row = document.createElement("div");
+    row.className = "seat";
+    row.innerHTML =
+      '<div class="wind">' + w + '</div>' +
+      '<input class="nm" list="names" placeholder="お名前" id="n'+i+'">' +
+      '<input class="sc" type="number" inputmode="numeric" placeholder="点数" id="p'+i+'">' +
+      '<div class="rk" id="r'+i+'">–</div>';
+    box.appendChild(row);
+  });
+  for(var i=0;i<4;i++){
+    document.getElementById("p"+i).oninput = draw;
+    document.getElementById("n"+i).oninput = draw;
+  }
+}
+
+function read(){
+  var a = [];
+  for(var i=0;i<4;i++){
+    a.push({
+      wind: WINDS[i],
+      name: document.getElementById("n"+i).value.trim(),
+      score: document.getElementById("p"+i).value
+    });
+  }
+  return a;
+}
+
+function ranks(rows){
+  var idx = rows.map(function(r,i){ return i; });
+  idx.sort(function(a,b){
+    var x = Number(rows[a].score), y = Number(rows[b].score);
+    if(y !== x) return y - x;
+    return a - b;          // 同点は東→南→西→北の順で上位
+  });
+  var out = [0,0,0,0];
+  idx.forEach(function(i,n){ out[i] = n + 1; });
+  return out;
+}
+
+function draw(){
+  var rows = read();
+  var filled = rows.every(function(r){ return r.score !== ""; });
+  var sum = rows.reduce(function(a,r){ return a + (Number(r.score)||0); }, 0);
+  var rk = filled ? ranks(rows) : null;
+  for(var i=0;i<4;i++){
+    var el = document.getElementById("r"+i);
+    el.textContent = rk ? rk[i] + "位" : "–";
+    el.className = "rk" + (rk && rk[i] === 1 ? " r1" : "");
+  }
+  var tot = document.getElementById("total");
+  tot.innerHTML = "<span>合計</span><b>" + sum.toLocaleString() + "</b>";
+  tot.className = "total" + (filled && sum !== START*4 ? " bad" : "");
+  if(filled && sum !== START*4){
+    tot.innerHTML = "<span>合計（" + (START*4).toLocaleString() + "点になりません）</span><b>"
+      + sum.toLocaleString() + "</b>";
+  }
+  var ok = filled && rows.every(function(r){ return r.name !== ""; });
+  document.getElementById("save").disabled = !ok;
+  document.getElementById("save").textContent =
+    state.records[key()] ? "この卓を修正して記録する" : "この卓を記録する";
+  refreshNames();
+}
+
+function load(){
+  var rec = state.records[key()];
+  var pre = (SEATING[state.slot] || {})[state.table] || ["","","",""];
+  for(var i=0;i<4;i++){
+    document.getElementById("n"+i).value = rec ? rec[i].name : (pre[i] || "");
+    document.getElementById("p"+i).value = rec ? rec[i].score : "";
+  }
+  draw();
+}
+
+/* ---------- 記録 ---------- */
+function save(){
+  var rows = read(), rk = ranks(rows);
+  var rec = rows.map(function(r,i){
+    return { wind:r.wind, name:r.name, score:Number(r.score), rank:rk[i] };
+  });
+  state.records[key()] = rec;
+  ls("nk_records", JSON.stringify(state.records));
+  drawChips(); draw();
+
+  if(!state.gas){
+    toast("端末に記録しました（スプレッドシート未設定）");
+    next(); return;
+  }
+  send({
+    date: d(), slot: slotLabel(state.slot), table: state.table,
+    rows: rec.map(function(r){
+      return [d(), slotLabel(state.slot), state.table+"卓", r.wind, r.name, r.score, r.score-START, r.rank];
+    })
+  }).then(function(){
+    toast("記録しました");
+    next();
+  }).catch(function(){
+    toast("端末には記録できましたが、送信に失敗しました", true);
+    next();
+  });
+}
+
+function next(){
+  var i = TABLES.indexOf(state.table);
+  if(i < TABLES.length - 1){ state.table = TABLES[i+1]; }
+  drawChips(); load();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function send(payload){
+  return fetch(state.gas, {
+    method: "POST",
+    headers: {"Content-Type":"text/plain;charset=utf-8"},
+    body: JSON.stringify(payload)
+  }).then(function(r){ if(!r.ok) throw new Error("ng"); return r; });
+}
+
+/* ---------- 名前候補 ---------- */
+function refreshNames(){
+  var set = {};
+  state.roster.forEach(function(n){ set[n] = 1; });
+  Object.keys(state.records).forEach(function(k){
+    if(k.split("|")[0] !== d()) return;
+    state.records[k].forEach(function(r){ set[r.name] = 1; });
+  });
+  var dl = document.getElementById("names");
+  var list = Object.keys(set).sort();
+  if(dl.dataset.n === String(list.length)) return;
+  dl.dataset.n = list.length;
+  dl.innerHTML = list.map(function(n){ return '<option value="'+esc(n)+'">'; }).join("");
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+/* ---------- ランキング ---------- */
+function aggregate(){
+  var m = {};
+  Object.keys(state.records).forEach(function(k){
+    if(k.split("|")[0] !== d()) return;
+    state.records[k].forEach(function(r){
+      if(!m[r.name]) m[r.name] = {name:r.name, g:0, pt:0, rs:0, top:0};
+      var a = m[r.name];
+      a.g++; a.pt += r.score - START; a.rs += r.rank;
+      if(r.rank === 1) a.top++;
+    });
+  });
+  var arr = Object.keys(m).map(function(k){
+    var a = m[k]; a.av = a.rs / a.g; return a;
+  });
+  arr.sort(function(x,y){
+    if(state.sort === "av"){
+      if(x.av !== y.av) return x.av - y.av;
+      return y.pt - x.pt;
+    }
+    if(y.pt !== x.pt) return y.pt - x.pt;
+    return x.av - y.av;
+  });
+  return arr;
+}
+
+function setSort(s){ state.sort = s; drawRanking(); }
+function setView(v){ state.view = v; drawRanking(); }
+
+function hl(id, on){
+  var el = document.getElementById(id);
+  el.style.background = on ? "var(--felt)" : "";
+  el.style.color = on ? "#fff" : "";
+}
+
+/* チーム集計 */
+function aggregateTeams(){
+  var m = {}, other = [];
+  TEAMS.forEach(function(t){
+    m[t.name] = { name:t.name, members:t.members, g:0, pt:0, rs:0, top:0 };
+  });
+  Object.keys(state.records).forEach(function(k){
+    if(k.split("|")[0] !== d()) return;
+    state.records[k].forEach(function(r){
+      var tn = TEAM_OF[r.name];
+      if(!tn){ if(other.indexOf(r.name) < 0) other.push(r.name); return; }
+      var a = m[tn];
+      a.g++; a.pt += r.score - START; a.rs += r.rank;
+      if(r.rank === 1) a.top++;
+    });
+  });
+  var arr = Object.keys(m).map(function(k){
+    var a = m[k]; a.av = a.g ? a.rs / a.g : 0; return a;
+  }).filter(function(a){ return a.g > 0; });
+  arr.sort(function(x,y){
+    if(state.sort === "av"){
+      if(x.av !== y.av) return x.av - y.av;
+      return y.pt - x.pt;
+    }
+    if(y.pt !== x.pt) return y.pt - x.pt;
+    return x.av - y.av;
+  });
+  arr.other = other;
+  return arr;
+}
+
+function drawRanking(){
+  hl("v-ind", state.view === "ind");
+  hl("v-team", state.view === "team");
+  hl("s-pt", state.sort === "pt");
+  hl("s-av", state.sort === "av");
+
+  var box = document.getElementById("ranking");
+  var arr = state.view === "team" ? aggregateTeams() : aggregate();
+  if(!arr.length){
+    box.innerHTML = '<p class="empty">まだ記録がありません。<br>「入力」から1卓目を記録してください。</p>';
+    return;
+  }
+
+  var head = state.view === "team" ? "チーム" : "お名前";
+  var h = '<table><tr><th></th><th>' + head + '</th><th style="text-align:right">累計±点</th>'
+        + '<th style="text-align:right">平均順位</th><th style="text-align:right">半荘</th>'
+        + '<th style="text-align:right">1位</th></tr>';
+  arr.forEach(function(a,i){
+    var label = esc(a.name);
+    if(state.view === "team"){
+      label += '<div style="font-size:11px;color:var(--muted);margin-top:2px">'
+             + esc(a.members.join("・")) + '</div>';
+    }
+    h += '<tr class="' + (i===0 ? "rank1" : "") + '">'
+      + '<td><span class="rk-badge">'+(i+1)+'</span></td>'
+      + '<td>'+label+'</td>'
+      + '<td class="n '+(a.pt>=0?"pos":"neg")+'">'+(a.pt>0?"+":"")+a.pt.toLocaleString()+'</td>'
+      + '<td class="n">'+a.av.toFixed(2)+'</td>'
+      + '<td class="n">'+a.g+'</td>'
+      + '<td class="n">'+a.top+'</td></tr>';
+  });
+  h += '</table>';
+  if(state.view === "team" && arr.other && arr.other.length){
+    h += '<p class="note">チームに入っていない方：' + esc(arr.other.join("、"))
+       + '<br>個人戦には反映されますが、チーム集計には入りません。</p>';
+  }
+  box.innerHTML = h;
+}
+
+function csv(){
+  var ind = aggregate(), team = aggregateTeams();
+  if(!ind.length){ toast("書き出すデータがありません", true); return; }
+  var s = "【チーム戦】\n順位,チーム,メンバー,累計±点,平均順位,半荘数,1位回数\n";
+  team.forEach(function(a,i){
+    s += [i+1, a.name, a.members.join("・"), a.pt, a.av.toFixed(2), a.g, a.top].join(",") + "\n";
+  });
+  s += "\n【個人戦】\n順位,名前,チーム,累計±点,平均順位,半荘数,1位回数\n";
+  ind.forEach(function(a,i){
+    s += [i+1, a.name, TEAM_OF[a.name] || "", a.pt, a.av.toFixed(2), a.g, a.top].join(",") + "\n";
+  });
+  var b = new Blob(["\ufeff"+s], {type:"text/csv"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(b);
+  a.download = "お楽しみ会ランキング_" + d() + ".csv";
+  a.click();
+}
+
+/* ---------- 設定 ---------- */
+function saveGas(){
+  state.gas = document.getElementById("gas").value.trim();
+  ls("nk_gas", state.gas);
+  toast("URLを保存しました");
+}
+function testGas(){
+  if(!state.gas){ toast("先にURLを入れてください", true); return; }
+  send({test:true}).then(function(){ toast("つながりました"); })
+    .catch(function(){ toast("つながりません。URLとデプロイ設定を確認してください", true); });
+}
+function saveRoster(){
+  state.roster = document.getElementById("roster").value
+    .split("\n").map(function(s){ return s.trim(); }).filter(Boolean);
+  ls("nk_roster", JSON.stringify(state.roster));
+  document.getElementById("names").dataset.n = "";
+  refreshNames(); drawStats();
+  toast(state.roster.length + "名を保存しました");
+}
+function drawStats(){
+  document.getElementById("rcount").textContent = state.roster.length + "名を登録中";
+  var n = Object.keys(state.records).filter(function(k){ return k.split("|")[0] === d(); }).length;
+  document.getElementById("dcount").textContent = d() + " の記録：" + n + "卓分";
+}
+function wipe(){
+  if(!confirm(d() + " の記録をこの端末から消します。よろしいですか？（スプレッドシートは消えません）")) return;
+  Object.keys(state.records).forEach(function(k){
+    if(k.split("|")[0] === d()) delete state.records[k];
+  });
+  ls("nk_records", JSON.stringify(state.records));
+  drawChips(); load(); drawStats();
+  toast("消しました");
+}
+
+/* ---------- トースト ---------- */
+var tt;
+function toast(msg, err){
+  var el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = "show" + (err ? " err" : "");
+  clearTimeout(tt);
+  tt = setTimeout(function(){ el.className = ""; }, 2600);
+}
+
+/* ---------- GASコード（設定タブに表示） ---------- */
+var GAS_CODE =
+'function doPost(e) {\n' +
+'  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("記録")\n' +
+'        || SpreadsheetApp.getActiveSpreadsheet().insertSheet("記録");\n' +
+'  var p  = JSON.parse(e.postData.contents);\n' +
+'\n' +
+'  if (sh.getLastRow() === 0) {\n' +
+'    sh.appendRow(["日付","時間帯","卓","座席","名前","最終点数","増減","順位"]);\n' +
+'  }\n' +
+'  if (p.test) return ContentService.createTextOutput("ok");\n' +
+'\n' +
+'  // 同じ日付・時間帯・卓の古い行を消してから書き直す（修正に対応）\n' +
+'  var last = sh.getLastRow();\n' +
+'  if (last > 1) {\n' +
+'    var v = sh.getRange(2, 1, last - 1, 3).getValues();\n' +
+'    for (var i = v.length - 1; i >= 0; i--) {\n' +
+'      var day = v[i][0];\n' +
+'      if (day instanceof Date) {\n' +
+'        day = Utilities.formatDate(day, "Asia/Tokyo", "yyyy-MM-dd");\n' +
+'      }\n' +
+'      if (String(day) === p.date && String(v[i][1]) === p.slot\n' +
+'          && String(v[i][2]) === p.table + "卓") {\n' +
+'        sh.deleteRow(i + 2);\n' +
+'      }\n' +
+'    }\n' +
+'  }\n' +
+'\n' +
+'  p.rows.forEach(function(r) { sh.appendRow(r); });\n' +
+'  return ContentService.createTextOutput("ok");\n' +
+'}';
+</script>
+</body>
+</html>
