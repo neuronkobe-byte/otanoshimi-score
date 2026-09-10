@@ -176,7 +176,7 @@ h2:first-child{margin-top:0}
   </div>
 
   <button class="btn" id="save" onclick="save()">この卓を記録する</button>
-  <p class="note">金色の点がついている時間帯・卓は記録済みです。選び直すと内容を修正できます（スプレッドシート側も上書きされます）。</p>
+  <p class="note">点数は百点単位で入力します（25,000点なら 250）。4人の合計が 1000 になります。<br>金色の点がついている時間帯・卓は記録済みです。選び直すと内容を修正できます（スプレッドシート側も上書きされます）。</p>
 </section>
 
 <!-- ===== ランキング ===== -->
@@ -240,7 +240,7 @@ function slotLabel(slot){
   var r = roundOf(slot);
   return r ? r + "（" + slot + "）" : slot;
 }
-var START = 25000;
+var START = 250;   // 百点単位（25000点 = 250）
 
 /* ---------- 開催日 ---------- */
 var EVENT_DATE = "2026-09-13";   // 9月13日（日）
@@ -384,7 +384,7 @@ function buildSeats(){
     row.innerHTML =
       '<div class="wind">' + w + '</div>' +
       '<input class="nm" list="names" placeholder="お名前" id="n'+i+'">' +
-      '<input class="sc" type="number" inputmode="numeric" placeholder="点数" id="p'+i+'">' +
+      '<input class="sc" type="number" inputmode="numeric" placeholder="250" id="p'+i+'">' +
       '<div class="rk" id="r'+i+'">–</div>';
     box.appendChild(row);
   });
@@ -429,7 +429,7 @@ function draw(){
     el.className = "rk" + (rk && rk[i] === 1 ? " r1" : "");
   }
   var tot = document.getElementById("total");
-  tot.innerHTML = "<span>合計</span><b>" + sum.toLocaleString() + "</b>";
+  tot.innerHTML = "<span>合計（百点単位）</span><b>" + sum.toLocaleString() + "</b>";
   tot.className = "total" + (filled && sum !== START*4 ? " bad" : "");
   if(filled && sum !== START*4){
     tot.innerHTML = "<span>合計（" + (START*4).toLocaleString() + "点になりません）</span><b>"
