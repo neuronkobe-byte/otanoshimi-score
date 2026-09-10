@@ -189,7 +189,7 @@ h2:first-child{margin-top:0}
     <button class="btn sub" onclick="setView('team')" id="v-team">チーム戦</button>
   </div>
   <div class="btnrow" id="sortrow">
-    <button class="btn sub" onclick="setSort('pt')" id="s-pt">累計±点順</button>
+    <button class="btn sub" onclick="setSort('pt')" id="s-pt">累計得点順</button>
     <button class="btn sub" onclick="setSort('av')" id="s-av">平均順位</button>
   </div>
   <div id="ranking"></div>
@@ -529,7 +529,7 @@ function aggregate(){
     state.records[k].forEach(function(r){
       if(!m[r.name]) m[r.name] = {name:r.name, g:0, pt:0, rs:0, top:0};
       var a = m[r.name];
-      a.g++; a.pt += r.score - START; a.rs += r.rank;
+      a.g++; a.pt += r.score; a.rs += r.rank;
       if(r.rank === 1) a.top++;
     });
   });
@@ -542,6 +542,7 @@ function aggregate(){
       return y.pt - x.pt;
     }
     if(y.pt !== x.pt) return y.pt - x.pt;
+    if(y.top !== x.top) return y.top - x.top;
     return x.av - y.av;
   });
   return arr;
@@ -568,7 +569,7 @@ function aggregateTeams(){
       var tn = TEAM_OF[r.name];
       if(!tn){ if(other.indexOf(r.name) < 0) other.push(r.name); return; }
       var a = m[tn];
-      a.g++; a.pt += r.score - START; a.rs += r.rank;
+      a.g++; a.pt += r.score; a.rs += r.rank;
       if(r.rank === 1) a.top++;
     });
   });
@@ -581,6 +582,7 @@ function aggregateTeams(){
       return y.pt - x.pt;
     }
     if(y.pt !== x.pt) return y.pt - x.pt;
+    if(y.top !== x.top) return y.top - x.top;
     return x.av - y.av;
   });
   arr.other = other;
@@ -601,9 +603,8 @@ function drawRanking(){
   }
 
   var head = state.view === "team" ? "チーム" : "お名前";
-  var h = '<table><tr><th></th><th>' + head + '</th><th style="text-align:right">累計±点</th>'
-        + '<th style="text-align:right">平均順位</th><th style="text-align:right">半荘</th>'
-        + '<th style="text-align:right">1位</th></tr>';
+  var h = '<table><tr><th></th><th>' + head + '</th><th style="text-align:right">累計得点</th>'
+        + '<th style="text-align:right">平均順位</th><th style="text-align:right">1位</th></tr>';
   arr.forEach(function(a,i){
     var label = esc(a.name);
     if(state.view === "team"){
@@ -613,9 +614,8 @@ function drawRanking(){
     h += '<tr class="' + (i===0 ? "rank1" : "") + '">'
       + '<td><span class="rk-badge">'+(i+1)+'</span></td>'
       + '<td>'+label+'</td>'
-      + '<td class="n '+(a.pt>=0?"pos":"neg")+'">'+(a.pt>0?"+":"")+a.pt.toLocaleString()+'</td>'
+      + '<td class="n">'+a.pt.toLocaleString()+'</td>'
       + '<td class="n">'+a.av.toFixed(2)+'</td>'
-      + '<td class="n">'+a.g+'</td>'
       + '<td class="n">'+a.top+'</td></tr>';
   });
   h += '</table>';
@@ -629,13 +629,13 @@ function drawRanking(){
 function csv(){
   var ind = aggregate(), team = aggregateTeams();
   if(!ind.length){ toast("書き出すデータがありません", true); return; }
-  var s = "【チーム戦】\n順位,チーム,メンバー,累計±点,平均順位,半荘数,1位回数\n";
+  var s = "【チーム戦】\n順位,チーム,メンバー,累計得点,平均順位,1位回数\n";
   team.forEach(function(a,i){
-    s += [i+1, a.name, a.members.join("・"), a.pt, a.av.toFixed(2), a.g, a.top].join(",") + "\n";
+    s += [i+1, a.name, a.members.join("・"), a.pt, a.av.toFixed(2), a.top].join(",") + "\n";
   });
-  s += "\n【個人戦】\n順位,名前,チーム,累計±点,平均順位,半荘数,1位回数\n";
+  s += "\n【個人戦】\n順位,名前,チーム,累計得点,平均順位,1位回数\n";
   ind.forEach(function(a,i){
-    s += [i+1, a.name, TEAM_OF[a.name] || "", a.pt, a.av.toFixed(2), a.g, a.top].join(",") + "\n";
+    s += [i+1, a.name, TEAM_OF[a.name] || "", a.pt, a.av.toFixed(2), a.top].join(",") + "\n";
   });
   var b = new Blob(["\ufeff"+s], {type:"text/csv"});
   var a = document.createElement("a");
