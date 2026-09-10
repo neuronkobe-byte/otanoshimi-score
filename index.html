@@ -179,7 +179,7 @@ h2:first-child{margin-top:0}
   <div class="btnrow" style="margin-top:8px">
     <button class="btn sub" onclick="clearScores()">点数だけ消す</button>
   </div>
-  <p class="note">点数は百点単位で入力します（25,000点なら 250）。4人の合計が 1000 になります。<br>金色の点がついている時間帯・卓は記録済みです。選び直すと内容を修正できます（スプレッドシート側も上書きされます）。</p>
+  <p class="note">点数は百点単位で入力します（25,000点なら 250）。4人の合計が 1000 になります。<br>名前はその場で書き換えられます。欠席や入れ替わりがあれば直してください。<br>ランキングは1〜4回戦のみ集計します。14:00以降はフリータイムなので、記録は残りますが順位には影響しません。<br>金色の点がついている時間帯・卓は記録済みです。選び直すと内容を修正できます（スプレッドシート側も上書きされます）。</p>
 </section>
 
 <!-- ===== ランキング ===== -->
@@ -208,6 +208,10 @@ h2:first-child{margin-top:0}
   </div>
   <p class="note">URLはこの端末に保存されます。未設定でも記録はできますが、端末内だけに残ります。</p>
 
+  <h2>担当する卓</h2>
+  <div class="chips" id="mytables"></div>
+  <p class="note">選んだ卓だけが入力画面に出ます。二人で同じ卓を入力してしまう事故を防げます。<br>全部おしたい場合は、すべて選んでください。</p>
+
   <h2>参加者リスト</h2>
   <textarea id="roster" placeholder="1行に1名ずつ貼り付け&#10;例：&#10;山田花子&#10;鈴木一郎"></textarea>
   <div class="btnrow" style="margin-top:8px">
@@ -217,7 +221,8 @@ h2:first-child{margin-top:0}
 
   <h2>この日のデータ</h2>
   <p class="note" id="dcount"></p>
-  <button class="btn sub" onclick="wipe()">この日の記録を消す</button>
+  <button class="btn sub" onclick="wipe()">全部の卓・全時間帯の点数を消す</button>
+  <p class="note">テストのあと、当日の朝に一度おしてください。席割りの名前と設定は残ります。<br>スプレッドシート側は clearRecords を実行してください。</p>
 
   <h2>GASのコード</h2>
   <p class="note">スプレッドシートの「拡張機能 → Apps Script」に貼り付けて、ウェブアプリとしてデプロイしてください（アクセスできるユーザー：全員）。</p>
@@ -232,7 +237,7 @@ h2:first-child{margin-top:0}
 <script>
 /* ---------- 定数 ---------- */
 var SLOTS = ["10:00","11:00","12:00","13:00","14:00","15:00","16:00"];
-var TABLES = [1,2,3,4,5,6];
+var TABLES = [1,2,3,4,5,6,7];
 var WINDS = ["東","南","西","北"];
 var ROUND_COUNT = 4;   // 1〜4回戦。以降は時間のまま表示
 function roundOf(slot){
@@ -243,6 +248,8 @@ function slotLabel(slot){
   var r = roundOf(slot);
   return r ? r + "（" + slot + "）" : slot;
 }
+/* ランキングは1〜4回戦だけ。14:00以降はフリータイムなので集計しません */
+function isRound(slot){ return SLOTS.indexOf(slot) < ROUND_COUNT; }
 var START = 250;   // 百点単位（25000点 = 250）
 
 /* ---------- 開催日 ---------- */
@@ -252,7 +259,8 @@ var EVENT_DATE = "2026-09-13";   // 9月13日（日）
 var DEFAULT_ROSTER = [
   "松田律子","余語","玉置","そう","木村","長谷部","中村","柿本",
   "今野","鮫島","塩崎しおり","阪下","塩崎あとし","木田","山下","小田垣",
-  "よしのり","宮脇","芝好","樋口","いっさ","松田加代子","岡本","立松"
+  "よしのり","宮脇","芝好","樋口","いっさ","松田加代子","岡本","立松",
+  "渡辺","栢野","吉田","上田","竹村","白井"
 ];
 
 /* ---------- チーム（1回戦の同卓メンバー） ---------- */
@@ -300,6 +308,24 @@ var SEATING = {
     4:["余語","宮脇","長谷部","立松"],
     5:["山下","木村","そう","塩崎しおり"],
     6:["塩崎あとし","玉置","今野","柿本"]
+  },
+  "14:00": {
+    1:["今野","鮫島","渡辺","栢野"],
+    2:["吉田","上田","竹村","白井"],
+    3:["松田律子","松田加代子","宮脇","阪下"],
+    4:["柿本","木田","木村","芝好"],
+    5:["余語","塩崎あとし","塩崎しおり","岡本"],
+    6:["山下","中村","長谷部","玉置"],
+    7:["そう","よしのり","いっさ","CPU"]
+  },
+  "15:00": {
+    1:["今野","鮫島","渡辺","栢野"],
+    2:["吉田","上田","竹村","白井"],
+    3:["松田律子","松田加代子","宮脇","阪下"],
+    4:["柿本","木田","木村","芝好"],
+    5:["余語","塩崎あとし","塩崎しおり","岡本"],
+    6:["山下","中村","長谷部","玉置"],
+    7:["そう","よしのり","いっさ","CPU"]
   }
 };
 
@@ -322,6 +348,8 @@ var state = {
   sort: "pt",
   view: "ind",
   records: JSON.parse(ls("nk_records") || "{}"),   // key: 日付|時間帯|卓 → [{name,score,rank}]
+  names:   JSON.parse(ls("nk_names") || "{}"),     // 当日その場で直した名前
+  my:      JSON.parse(ls("nk_mytables") || "null") || TABLES.slice(),
   roster: JSON.parse(ls("nk_roster") || "null") || DEFAULT_ROSTER.slice(),
   gas: ls("nk_gas") || ""
 };
@@ -337,6 +365,7 @@ function d(){ return document.getElementById("date").value; }
   document.getElementById("roster").value = state.roster.join("\n");
   document.getElementById("gascode").textContent = GAS_CODE;
   buildSeats();
+  drawMyTables();
   drawChips();
   load();
   draw();
@@ -364,7 +393,9 @@ function drawChips(){
     s.appendChild(b);
   });
   var t = document.getElementById("tables"); t.innerHTML = "";
-  TABLES.forEach(function(v){
+  var mine = state.my.length ? state.my : TABLES;
+  if(mine.indexOf(state.table) < 0) state.table = mine[0];
+  mine.forEach(function(v){
     var b = document.createElement("button");
     b.className = "chip" + (v === state.table ? " on" : "");
     b.textContent = v + "卓";
@@ -393,7 +424,7 @@ function buildSeats(){
   });
   for(var i=0;i<4;i++){
     document.getElementById("p"+i).oninput = draw;
-    document.getElementById("n"+i).oninput = draw;
+    document.getElementById("n"+i).oninput = function(){ keepNames(); draw(); };
   }
 }
 
@@ -410,7 +441,10 @@ function read(){
 }
 
 function ranks(rows){
-  var idx = rows.map(function(r,i){ return i; });
+  var idx = [];
+  for(var i=0;i<4;i++){
+    if(rows[i].name !== "" && rows[i].score !== "") idx.push(i);
+  }
   idx.sort(function(a,b){
     var x = Number(rows[a].score), y = Number(rows[b].score);
     if(y !== x) return y - x;
@@ -423,39 +457,57 @@ function ranks(rows){
 
 function draw(){
   var rows = read();
-  var filled = rows.every(function(r){ return r.score !== ""; });
+  var seated = rows.filter(function(r){ return r.name !== ""; });
+  var n = seated.length;
+  var filled = n >= 3 && seated.every(function(r){ return r.score !== ""; });
   var sum = rows.reduce(function(a,r){ return a + (Number(r.score)||0); }, 0);
   var rk = filled ? ranks(rows) : null;
   for(var i=0;i<4;i++){
     var el = document.getElementById("r"+i);
-    el.textContent = rk ? rk[i] + "位" : "–";
+    el.textContent = (rk && rk[i]) ? rk[i] + "位" : "–";
     el.className = "rk" + (rk && rk[i] === 1 ? " r1" : "");
   }
+  var want = n >= 3 ? START*4 : null;   // 空席でも点棒は4人分。合計は常に1000
   var tot = document.getElementById("total");
-  tot.innerHTML = "<span>合計（百点単位）</span><b>" + sum.toLocaleString() + "</b>";
-  tot.className = "total" + (filled && sum !== START*4 ? " bad" : "");
-  if(filled && sum !== START*4){
-    tot.innerHTML = "<span>合計（" + (START*4).toLocaleString() + "点になりません）</span><b>"
-      + sum.toLocaleString() + "</b>";
-  }
-  var ok = filled && rows.every(function(r){ return r.name !== ""; });
+  var bad = filled && want !== null && sum !== want;
+  tot.className = "total" + (bad ? " bad" : "");
+  tot.innerHTML = bad
+    ? "<span>合計（" + want.toLocaleString() + " になりません）</span><b>" + sum.toLocaleString() + "</b>"
+    : "<span>合計（百点単位・" + n + "人）</span><b>" + sum.toLocaleString() + "</b>";
+
+  var ok = filled;
   document.getElementById("save").disabled = !ok;
   document.getElementById("save").textContent =
     state.records[key()] ? "この卓を修正して記録する" : "この卓を記録する";
   refreshNames();
 }
 
+/* 当日その場で直した名前を覚えておく（席割りと同じなら覚えない） */
+function keepNames(){
+  var k = key(), ns = [];
+  for(var i=0;i<4;i++) ns.push(document.getElementById("n"+i).value.trim());
+  var pre = (SEATING[state.slot] || {})[state.table] || ["","","",""];
+  var same = ns.every(function(v,i){ return v === (pre[i] || ""); });
+  if(same) delete state.names[k]; else state.names[k] = ns;
+  ls("nk_names", JSON.stringify(state.names));
+}
+
 function clearScores(){
   for(var i=0;i<4;i++){ document.getElementById("p"+i).value = ""; }
-  draw();
-  toast("点数を消しました");
+  keepNames();
+  delete state.records[key()];                       // 端末に残っていた点数も消す
+  ls("nk_records", JSON.stringify(state.records));
+  drawChips(); draw();
+  toast("点数を消しました（名前は残ります）");
 }
 
 function load(){
   var rec = state.records[key()];
+  var man = state.names[key()];
   var pre = (SEATING[state.slot] || {})[state.table] || ["","","",""];
   for(var i=0;i<4;i++){
-    document.getElementById("n"+i).value = rec ? rec[i].name : (pre[i] || "");
+    document.getElementById("n"+i).value =
+      rec ? rec[i].name : (man ? (man[i] || "") : (pre[i] || ""));
     document.getElementById("p"+i).value = rec ? rec[i].score : "";
   }
   draw();
@@ -477,7 +529,8 @@ function save(){
   }
   send({
     date: d(), slot: slotLabel(state.slot), table: state.table,
-    rows: rec.map(function(r){
+    rows: rec.filter(function(r){ return r.name !== "" && r.rank > 0; })
+             .map(function(r){
       return [d(), slotLabel(state.slot), state.table+"卓", r.wind, r.name, r.score, r.rank];
     })
   }).then(function(){
@@ -490,8 +543,9 @@ function save(){
 }
 
 function next(){
-  var i = TABLES.indexOf(state.table);
-  if(i < TABLES.length - 1){ state.table = TABLES[i+1]; }
+  var mine = state.my.length ? state.my : TABLES;
+  var i = mine.indexOf(state.table);
+  if(i >= 0 && i < mine.length - 1){ state.table = mine[i+1]; }
   drawChips(); load();
   window.scrollTo({top:0, behavior:"smooth"});
 }
@@ -525,8 +579,10 @@ function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
 function aggregate(){
   var m = {};
   Object.keys(state.records).forEach(function(k){
-    if(k.split("|")[0] !== d()) return;
+    var p = k.split("|");
+    if(p[0] !== d() || !isRound(p[1])) return;
     state.records[k].forEach(function(r){
+      if(!r.name || !r.rank) return;
       if(!m[r.name]) m[r.name] = {name:r.name, g:0, pt:0, rs:0, top:0};
       var a = m[r.name];
       a.g++; a.pt += r.score; a.rs += r.rank;
@@ -564,8 +620,10 @@ function aggregateTeams(){
     m[t.name] = { name:t.name, members:t.members, g:0, pt:0, rs:0, top:0 };
   });
   Object.keys(state.records).forEach(function(k){
-    if(k.split("|")[0] !== d()) return;
+    var p = k.split("|");
+    if(p[0] !== d() || !isRound(p[1])) return;
     state.records[k].forEach(function(r){
+      if(!r.name || !r.rank) return;
       var tn = TEAM_OF[r.name];
       if(!tn){ if(other.indexOf(r.name) < 0) other.push(r.name); return; }
       var a = m[tn];
@@ -598,12 +656,13 @@ function drawRanking(){
   var box = document.getElementById("ranking");
   var arr = state.view === "team" ? aggregateTeams() : aggregate();
   if(!arr.length){
-    box.innerHTML = '<p class="empty">まだ記録がありません。<br>「入力」から1卓目を記録してください。</p>';
+    box.innerHTML = '<p class="empty">まだ記録がありません。<br>「入力」から1回戦を記録してください。</p>';
     return;
   }
+  var lead = '<p class="note" style="margin:0 0 10px">1〜4回戦の成績です。14:00以降のフリータイムは含みません。</p>';
 
   var head = state.view === "team" ? "チーム" : "お名前";
-  var h = '<table><tr><th></th><th>' + head + '</th><th style="text-align:right">累計得点</th>'
+  var h = lead + '<table><tr><th></th><th>' + head + '</th><th style="text-align:right">累計得点</th>'
         + '<th style="text-align:right">平均順位</th><th style="text-align:right">1位</th></tr>';
   arr.forEach(function(a,i){
     var label = esc(a.name);
@@ -663,19 +722,43 @@ function saveRoster(){
   refreshNames(); drawStats();
   toast(state.roster.length + "名を保存しました");
 }
+function drawMyTables(){
+  var box = document.getElementById("mytables");
+  box.innerHTML = "";
+  TABLES.forEach(function(v){
+    var b = document.createElement("button");
+    b.className = "chip" + (state.my.indexOf(v) >= 0 ? " on" : "");
+    b.textContent = v + "卓";
+    b.onclick = function(){
+      var at = state.my.indexOf(v);
+      if(at < 0) state.my.push(v); else state.my.splice(at, 1);
+      if(!state.my.length) state.my = TABLES.slice();
+      state.my.sort(function(x,y){ return x - y; });
+      ls("nk_mytables", JSON.stringify(state.my));
+      drawMyTables(); drawChips(); load();
+    };
+    box.appendChild(b);
+  });
+}
+
 function drawStats(){
   document.getElementById("rcount").textContent = state.roster.length + "名を登録中";
   var n = Object.keys(state.records).filter(function(k){ return k.split("|")[0] === d(); }).length;
   document.getElementById("dcount").textContent = d() + " の記録：" + n + "卓分";
 }
 function wipe(){
-  if(!confirm(d() + " の記録をこの端末から消します。よろしいですか？（スプレッドシートは消えません）")) return;
+  if(!confirm(d() + " の点数を、全部の卓・全時間帯まとめて消します。\n名前は席割りに戻ります。（スプレッドシートは消えません）")) return;
+  if(!confirm("本当に消しますか。元に戻せません。")) return;
   Object.keys(state.records).forEach(function(k){
     if(k.split("|")[0] === d()) delete state.records[k];
   });
+  Object.keys(state.names).forEach(function(k){
+    if(k.split("|")[0] === d()) delete state.names[k];
+  });
   ls("nk_records", JSON.stringify(state.records));
+  ls("nk_names", JSON.stringify(state.names));
   drawChips(); load(); drawStats();
-  toast("消しました");
+  toast("点数を消しました");
 }
 
 /* ---------- トースト ---------- */
